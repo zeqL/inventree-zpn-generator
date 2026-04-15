@@ -162,26 +162,26 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
     VERSION = "0.1.0"
     WEBSITE = "https://github.com/still-asking/inventree-sapn-generator"
 
-    NAME = "SAPNGenerator"
-    SLUG = "sapngen"
-    TITLE = "SAPN Generator"
+    NAME = "ZPNGenerator"
+    SLUG = "zpngen"
+    TITLE = "ZPN Generator"
 
     SETTINGS = {
         "ACTIVE": {
             "name": "Active",
-            "description": "SAPN generator is active",
+            "description": "ZPN generator is active",
             "validator": bool,
             "default": True,
         },
         "ON_CREATE": {
             "name": "On Create",
-            "description": "Generate SAPN when creating new parts",
+            "description": "Generate ZPN when creating new parts",
             "validator": bool,
             "default": True,
         },
         "ON_CHANGE": {
             "name": "On Change",
-            "description": "Generate SAPN when editing parts (only if IPN is empty)",
+            "description": "Generate ZPN when editing parts (only if IPN is empty)",
             "validator": bool,
             "default": False,
         },
