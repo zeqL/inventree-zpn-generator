@@ -142,7 +142,7 @@ def generate_sapn_for_part(part) -> str | None:
         return None
 
 
-class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
+class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
     """Plugin to generate SAPN (Sequential Auto Part Number) automatically.
     
     SAPN Format: SAPN-{CCC}-{SS}-{NNNNN}
