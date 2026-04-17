@@ -1,6 +1,6 @@
 from plugin import InvenTreePlugin
 from plugin.mixins import EventMixin, SettingsMixin
-from part.models import Part, PartParameter
+from part.models import Part, PartCategory
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -35,7 +35,7 @@ def validate_ss(value: str) -> bool:
 def get_part_parameter_value(part, parameter_name: str) -> str | None:
     """Get the value of a part parameter by name."""
     try:
-        param = PartParameter.objects.filter(
+        param = PartCategory.objects.filter(
             part=part,
             template__name=parameter_name
         ).first()
