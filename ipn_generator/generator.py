@@ -164,7 +164,7 @@ class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
         "Uses SA_CCC and SA_SS part parameters to determine category codes. "
         "Format: SAPN-{CCC}-{SS}-{NNNNN}"
     )
-    VERSION = "0.1.0"
+    VERSION = "0.1.1"
     WEBSITE = "https://github.com/still-asking/inventree-sapn-generator"
 
     NAME = "SAPNGenerator"
