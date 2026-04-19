@@ -3,8 +3,8 @@ requires = ['setuptools>=61.0']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = "inventree-zpn-generator"
-version = "0.2.0"
+name = "inventree-sapn-generator"
+version = "0.1.0"
 description = "InvenTree plugin to automatically generate SAPN (Sequential Auto Part Numbers) using SA_CCC and SA_SS parameters"
 authors = [
     {name = "Nichlas Walsøe", email = "lavissawow@gmail.com"}
@@ -23,7 +23,7 @@ requires-python = ">=3.9"
 "Homepage" = "https://github.com/still-asking/inventree-sapn-generator"
 
 [project.entry-points."inventree_plugins"]
-ZPNGenerator = 'ipn_generator.generator:ZPNGeneratorPlugin'
+SAPNGenerator = 'ipn_generator.generator:SAPNGeneratorPlugin'
 
 [tool.ruff.lint]
 ignore = [
@@ -36,3 +36,4 @@ ignore = [
     "E501",
     "W605"
 ]
+
