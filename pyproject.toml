@@ -4,7 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "inventree-sapn-generator"
-version = "0.1.0"
+version = "0.1.1"
 description = "InvenTree plugin to automatically generate SAPN (Sequential Auto Part Numbers) using SA_CCC and SA_SS parameters"
 authors = [
     {name = "Nichlas Walsøe", email = "lavissawow@gmail.com"}
