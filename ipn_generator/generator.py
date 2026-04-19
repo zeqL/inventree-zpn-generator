@@ -1,10 +1,10 @@
 import logging
 import re
-from zipfile import ZIP_BZIP2
 
+from common.models import Parameter, ParameterTemplate
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from part.models import Part, PartCategoryParameterTemplate, PartParameter
+from part.models import Part
 from plugin import InvenTreePlugin
 from plugin.mixins import EventMixin, SettingsMixin
 
