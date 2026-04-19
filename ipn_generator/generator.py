@@ -1,71 +1,66 @@
 import logging
 import re
+from zipfile import ZIP_BZIP2
 
-from common.models import Parameter, ParameterTemplate
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from part.models import Part
+from part.models import Part, PartCategoryParameterTemplate, PartParameter
 from plugin import InvenTreePlugin
 from plugin.mixins import EventMixin, SettingsMixin
 
 logger = logging.getLogger("inventree")
 
-# SAPN format constants
-SAPN_PREFIX = "SAPN"
-SAPN_CCC_PARAM = "SA_CCC"
-SAPN_SS_PARAM = "SA_SS"
-SAPN_MAX_SEQUENCE = 99999
-SAPN_RETRY_ATTEMPTS = 10
+# ZPN format constants
+ZPN_PREFIX = "AA"
+ZPN_CAT_PARAM = "ZPN_CAT"
+ZPN_SUBCAT_PARAM = "ZPN_SUBCAT"
+ZPN_MAX_SEQUENCE = 999999
+ZPN_RETRY_ATTEMPTS = 10
 
 # Regex patterns for validation
-CCC_PATTERN = re.compile(r"^[A-Z]{3}$")
-SS_PATTERN = re.compile(r"^\d{2}$")
+ZPN_CAT_PATTERN = re.compile(rf"^[A-Z0-9]{3}$")
+ZPN_SUBCAT_PATTERN = re.compile(r"^\d{2}$")
 
 
 def validate_ccc(value: str) -> bool:
     """Validate CCC component (3 uppercase letters)."""
-    return bool(CCC_PATTERN.match(value))
+    return bool(ZPN_CAT_PATTERN.match(value))
 
 
 def validate_ss(value: str) -> bool:
     """Validate SS component (2 digits)."""
-    return bool(SS_PATTERN.match(value))
+    return bool(ZPN_SUBCAT_PATTERN.match(value))
 
 
 def get_part_parameter_value(part, parameter_name: str) -> str | None:
     """Get the value of a part parameter by name."""
     try:
+        "param = PartCategory.objects.filter(part=part, name=parameter_name).first()"
         param = Parameter.objects.filter(
-            model_id=part.pk, 
-            template__name=parameter_name
+            model_id=part.pk, template__name=parameter_name
         ).first()
-
-        # param = PartParameter.objects.filter(
-        #    part=part,
-        #    template__name=parameter_name
-        # ).first()
         if param:
             return param.data
     except Exception as e:
-        logger.warning(f"SAPN Generator: Error reading parameter {parameter_name}: {e}")
+        logger.warning(f"ZPN Generator: Error reading parameter {parameter_name}: {e}")
     return None
 
 
-def compute_next_sapn(ccc: str, ss: str) -> str | None:
+def compute_next_zpn(ccc: str, ss: str) -> str | None:
     """
-    Compute the next SAPN for the given CCC and SS values.
+    Compute the next ZPN for the given ZPN_CAT_PARAM and ZPN_SUBCAT_PARAM values.
 
     Args:
-        ccc: 3-letter category code (e.g., 'ELC')
-        ss: 2-digit subcategory code (e.g., '11')
+        ZPN_CAT_PARAM: 3-alphanumeric category code (e.g., '1AA' or 'AAA')
+        ZPN_SUBCAT_PARAM: 2-digit subcategory code (e.g., '11')
 
     Returns:
-        The next SAPN string (e.g., 'SAPN-ELC-11-00042') or None if max reached.
+        The next ZPN string (e.g., '1AA01000123') or None if max reached.
 
     Raises:
-        ValueError: If the next sequence number would exceed 99999.
+        ValueError: If the next sequence number would exceed 999999.
     """
-    prefix = f"{SAPN_PREFIX}-{ccc}-{ss}-"
+    prefix = f"{ccc}{ss}"
 
     # Find the maximum existing IPN with this prefix
     # Since the suffix is fixed-width 5 digits, lexicographic ordering works
@@ -79,114 +74,114 @@ def compute_next_sapn(ccc: str, ss: str) -> str | None:
             next_num = current_num + 1
         except (ValueError, IndexError) as e:
             logger.warning(
-                f"SAPN Generator: Could not parse existing IPN '{latest.IPN}': {e}"
+                f"ZPN Generator: Could not parse existing IPN '{latest.IPN}': {e}"
             )
             next_num = 1
     else:
         next_num = 1
 
     # Check for overflow
-    if next_num > SAPN_MAX_SEQUENCE:
+    if next_num > ZPN_MAX_SEQUENCE:
         raise ValueError(
-            f"SAPN sequence overflow for bucket ({ccc}, {ss}): "
-            f"next number {next_num} exceeds maximum {SAPN_MAX_SEQUENCE}. "
+            f"ZPN sequence overflow for bucket ({ccc}, {ss}): "
+            f"next number {next_num} exceeds maximum {ZPN_MAX_SEQUENCE}. "
             "Cannot generate more IPNs for this category/subcategory combination."
         )
 
-    return f"{prefix}{next_num:05d}"
+    return f"{prefix}{next_num:06d}"
 
 
-def generate_sapn_for_part(part) -> str | None:
+def generate_zpn_for_part(part) -> str | None:
     """
-    Generate a SAPN for the given part based on its SA_CCC and SA_SS parameters.
+    Generate a ZPN for the given part based on its ZPN_CAT_PARAM and ZPN_SUBCAT_PARAM parameters.
 
     Args:
         part: InvenTree Part object
 
     Returns:
-        Generated SAPN string or None if generation is not possible.
+        Generated ZPN string or None if generation is not possible.
     """
     # Read CCC from part parameter SA_CCC
-    ccc = get_part_parameter_value(part, SAPN_CCC_PARAM)
+    ccc = get_part_parameter_value(part, ZPN_CAT_PARAM)
     if not ccc:
         logger.warning(
-            f"SAPN Generator: Part {part.pk} missing required parameter '{SAPN_CCC_PARAM}'. "
-            "Cannot generate SAPN."
+            f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_CAT_PARAM}'. "
+            "Cannot generate ZPN."
         )
         return None
 
     ccc = ccc.strip().upper()
     if not validate_ccc(ccc):
         logger.warning(
-            f"SAPN Generator: Part {part.pk} has invalid {SAPN_CCC_PARAM}='{ccc}'. "
-            f"Must match pattern ^[A-Z]{{3}}$. Cannot generate SAPN."
+            f"ZPN Generator: Part {part.pk} has invalid {ZPN_CAT_PARAM}='{ccc}'. "
+            f"Must match pattern ^[A-Z0-9]{{3}}$. Cannot generate ZPN."
         )
         return None
 
     # Read SS from part parameter SA_SS
-    ss = get_part_parameter_value(part, SAPN_SS_PARAM)
+    ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
     if not ss:
         logger.warning(
-            f"SAPN Generator: Part {part.pk} missing required parameter '{SAPN_SS_PARAM}'. "
-            "Cannot generate SAPN."
+            f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_SUBCAT_PARAM}'. "
+            "Cannot generate ZPN."
         )
         return None
 
     ss = ss.strip()
     if not validate_ss(ss):
         logger.warning(
-            f"SAPN Generator: Part {part.pk} has invalid {SAPN_SS_PARAM}='{ss}'. "
-            f"Must match pattern ^\\d{{2}}$. Cannot generate SAPN."
+            f"ZPN Generator: Part {part.pk} has invalid {ZPN_SUBCAT_PARAM}='{ss}'. "
+            f"Must match pattern ^\\d{{2}}$. Cannot generate ZPN."
         )
         return None
 
     try:
-        return compute_next_sapn(ccc, ss)
+        return compute_next_zpn(ccc, ss)
     except ValueError as e:
-        logger.error(f"SAPN Generator: {e}")
+        logger.error(f"ZPN Generator: {e}")
         return None
 
 
-class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
-    """Plugin to generate SAPN (Sequential Auto Part Number) automatically.
+class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
+    """Plugin to generate ZPN (Z Part Number) automatically.
 
-    SAPN Format: SAPN-{CCC}-{SS}-{NNNNN}
-    - CCC: 3-letter code from part parameter SA_CCC
-    - SS: 2-digit code from part parameter SA_SS
-    - NNNNN: 5-digit zero-padded sequence number per (CCC, SS) bucket
+    ZPN Format: {CCC}{SS}{NNNNNN}
+    - CCC: 3-Alphanumeric code from part parameter ZPN_CAT_PARAM
+    - SS: 2-digit code from part parameter ZPN_SUBCAT_PARAM
+    - NNNNNN: 6-digit zero-padded sequence number per (CCC, SS) bucket
 
-    Example: SAPN-ELC-11-00042
+    Example: 1AA01123456
     """
 
-    AUTHOR = "Nicolas Désilles, Modified from Nichlas W."
+    AUTHOR = "Simon F., Modified from Nichlas W. and Nicolas Désilles"
     DESCRIPTION = (
-        "Plugin for automatically assigning SAPN (Still Asking Part Numbers) to parts. "
-        "Uses SA_CCC and SA_SS part parameters to determine category codes. "
-        "Format: SAPN-{CCC}-{SS}-{NNNNN}"
+        "Plugin for automatically assigning IPN to parts. Prefix customisation for categories and subcategories (template configuration) "
+        "Uses ZPN_CAT_PARAM and ZPN_SUBCAT_PARAM part parameters to determine category codes. "
+        "Format: {CCC}{SS}{NNNNNN}"
     )
-    VERSION = "0.1.1"
+    VERSION = "0.1.0"
     WEBSITE = "https://github.com/still-asking/inventree-sapn-generator"
 
-    NAME = "SAPNGenerator"
-    SLUG = "sapngen"
-    TITLE = "SAPN Generator"
+    NAME = "ZPNGenerator"
+    SLUG = "zpngen"
+    TITLE = "ZPN Generator"
 
     SETTINGS = {
         "ACTIVE": {
             "name": "Active",
-            "description": "SAPN generator is active",
+            "description": "ZPN generator is active",
             "validator": bool,
             "default": True,
         },
         "ON_CREATE": {
             "name": "On Create",
-            "description": "Generate SAPN when creating new parts",
+            "description": "Generate ZPN when creating new parts",
             "validator": bool,
             "default": True,
         },
         "ON_CHANGE": {
             "name": "On Change",
-            "description": "Generate SAPN when editing parts (only if IPN is empty)",
+            "description": "Generate ZPN when editing parts (only if IPN is empty)",
             "validator": bool,
             "default": False,
         },
@@ -207,7 +202,7 @@ class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
         return False
 
     def process_event(self, event, *args, **kwargs):
-        """Main plugin handler function for SAPN generation."""
+        """Main plugin handler function for ZPN generation."""
 
         if not self.get_setting("ACTIVE"):
             return False
@@ -217,27 +212,27 @@ class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
 
         # Events can fire on unrelated models
         if model != "Part":
-            logger.debug("SAPN Generator: Event model is not Part")
+            logger.debug("ZPN Generator: Event model is not Part")
             return
 
         # Fetch the part
         try:
             part = Part.objects.get(id=id)
         except Part.DoesNotExist:
-            logger.warning(f"SAPN Generator: Part with id {id} not found")
+            logger.warning(f"ZPN Generator: Part with id {id} not found")
             return
 
         # Don't create IPNs for parts that already have one
         if part.IPN:
             logger.debug(
-                f"SAPN Generator: Part {id} already has IPN '{part.IPN}', skipping"
+                f"ZPN Generator: Part {id} already has IPN '{part.IPN}', skipping"
             )
             return
 
-        # Attempt SAPN generation with retry for concurrency handling
-        for attempt in range(1, SAPN_RETRY_ATTEMPTS + 1):
+        # Attempt ZPN generation with retry for concurrency handling
+        for attempt in range(1, ZPN_RETRY_ATTEMPTS + 1):
             try:
-                new_ipn = generate_sapn_for_part(part)
+                new_ipn = generate_zpn_for_part(part)
 
                 if not new_ipn:
                     # Generation failed due to missing/invalid parameters - already logged
@@ -251,43 +246,43 @@ class SAPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
                     # Double-check IPN hasn't been set in the meantime
                     if part.IPN:
                         logger.debug(
-                            f"SAPN Generator: Part {id} IPN was set during processing, skipping"
+                            f"ZPN Generator: Part {id} IPN was set during processing, skipping"
                         )
                         return
 
-                    # Recompute SAPN to get the latest sequence number
-                    ccc = get_part_parameter_value(part, SAPN_CCC_PARAM)
-                    ss = get_part_parameter_value(part, SAPN_SS_PARAM)
+                    # Recompute ZPN to get the latest sequence number
+                    ccc = get_part_parameter_value(part, ZPN_CAT_PARAM)
+                    ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
 
                     if ccc and ss:
                         ccc = ccc.strip().upper()
                         ss = ss.strip()
-                        new_ipn = compute_next_sapn(ccc, ss)
+                        new_ipn = compute_next_zpn(ccc, ss)
 
                     part.IPN = new_ipn
                     part.save()
 
-                logger.info(f"SAPN Generator: Assigned IPN '{new_ipn}' to Part {id}")
+                logger.info(f"ZPN Generator: Assigned IPN '{new_ipn}' to Part {id}")
                 return
 
             except IntegrityError as e:
                 # Likely a uniqueness conflict - retry with new sequence
                 logger.warning(
-                    f"SAPN Generator: Integrity error on attempt {attempt}/{SAPN_RETRY_ATTEMPTS} "
+                    f"ZPN Generator: Integrity error on attempt {attempt}/{ZPN_RETRY_ATTEMPTS} "
                     f"for Part {id}: {e}"
                 )
-                if attempt == SAPN_RETRY_ATTEMPTS:
+                if attempt == ZPN_RETRY_ATTEMPTS:
                     logger.error(
-                        f"SAPN Generator: Failed to assign IPN to Part {id} after "
-                        f"{SAPN_RETRY_ATTEMPTS} attempts due to integrity errors"
+                        f"ZPN Generator: Failed to assign IPN to Part {id} after "
+                        f"{ZPN_RETRY_ATTEMPTS} attempts due to integrity errors"
                     )
             except ValueError as e:
                 # Sequence overflow
-                logger.error(f"SAPN Generator: {e}")
+                logger.error(f"ZPN Generator: {e}")
                 return
             except Exception as e:
                 logger.error(
-                    f"SAPN Generator: Unexpected error assigning IPN to Part {id}: {e}"
+                    f"ZPN Generator: Unexpected error assigning IPN to Part {id}: {e}"
                 )
                 return
 
