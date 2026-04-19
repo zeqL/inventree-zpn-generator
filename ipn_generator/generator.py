@@ -36,7 +36,8 @@ def get_part_parameter_value(part, parameter_name: str) -> str | None:
     """Get the value of a part parameter by name."""
     try:
         param = Parameter.objects.filter(
-            model_id=part.pk, template=parameter_name
+            model_id=part.pk, 
+            template__name=parameter_name
         ).first()
 
         # param = PartParameter.objects.filter(
