@@ -11,7 +11,6 @@ from plugin.mixins import EventMixin, SettingsMixin
 logger = logging.getLogger("inventree")
 
 # ZPN format constants
-ZPN_PREFIX = "AA"
 ZPN_CAT_PARAM = "ZPN_CAT"
 ZPN_SUBCAT_PARAM = "ZPN_SUBCAT"
 ZPN_MAX_SEQUENCE = 999999
@@ -37,7 +36,7 @@ def get_part_parameter_value(part, parameter_name: str) -> str | None:
     try:
         "param = PartCategory.objects.filter(part=part, name=parameter_name).first()"
         param = Parameter.objects.filter(
-            model_id=part.pk, template__name=parameter_name
+            model_id=part.id, template__name=parameter_name
         ).first()
         if param:
             return param.data
