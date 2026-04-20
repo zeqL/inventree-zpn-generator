@@ -121,7 +121,7 @@ def generate_zpn_for_part(part) -> str | None:
     ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
 
     #If default subcat value is ON set ss to ZPN_SUBCAT default value
-    if not ss and ZPN_SUBCAT_DEFVAL_ON is True
+    if not ss and ZPN_SUBCAT_DEFVAL_ON is True:
         ss = ZPN_SUBCAT_DEFVAL
     else
         logger.warning(
