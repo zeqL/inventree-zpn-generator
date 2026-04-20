@@ -5,12 +5,12 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = "inventree-zpn-generator"
 version = "0.2.0"
-description = "InvenTree plugin to automatically generate ZPN using SA_CCC and SA_SS parameters"
+description = "InvenTree plugin to automatically generate ZPN using ZPN_CAT and ZPN_SUBCAT parameters"
 authors = [
-    {name = "S. F", email = "lavissawow@gmail.com"}
+    {name = "Simon F.", email = ""}
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+license = MIT
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.9"
 
 [project.urls]
-"Homepage" = "https://github.com/still-asking/inventree-sapn-generator"
+"Homepage" = "https://github.com/zeqL/inventree-zpn-generator/"
 
 [project.entry-points."inventree_plugins"]
 ZPNGenerator = 'ipn_generator.generator:ZPNGeneratorPlugin'
@@ -36,5 +36,6 @@ ignore = [
     "E501",
     "W605"
 ]
+
 
 
