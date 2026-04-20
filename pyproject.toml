@@ -7,7 +7,7 @@ name = "inventree-zpn-generator"
 version = "0.2.0"
 description = "InvenTree plugin to automatically generate ZPN using ZPN_CAT and ZPN_SUBCAT parameters"
 authors = [
-    {name = "Simon F.", email = ""}
+    {name = "Simon F."}
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
