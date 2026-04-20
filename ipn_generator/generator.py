@@ -15,6 +15,7 @@ ZPN_CAT_PARAM = "ZPN_CAT"
 ZPN_SUBCAT_PARAM = "ZPN_SUBCAT"
 ZPN_MAX_SEQUENCE = 999999
 ZPN_RETRY_ATTEMPTS = 10
+ZPN_SUBCAT_DEFVAL_ON = False
 
 # Regex patterns for validation
 ZPN_CAT_PATTERN = re.compile(r"^[A-Z0-9]{3}$")
@@ -120,7 +121,7 @@ def generate_zpn_for_part(part) -> str | None:
     # Read SS from part parameter ZPN_SUBCAT_PARAM
     ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
 
-    #If default subcat value is ON set ss to ZPN_SUBCAT default value
+    # If default subcat value is ON set ss to ZPN_SUBCAT default value
     if not ss and ZPN_SUBCAT_DEFVAL_ON is True:
         ss = ZPN_SUBCAT_DEFVAL
     else:
@@ -189,14 +190,14 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
             "default": False,
         },
         "ZPN_SUBCAT_DEFVAL_ON": {
-            "name": "ZPN SUBCAT Default Value ON",
+            "name": "ZPN SUBCAT Default Value ON/OFF",
             "description": "Apply a default ZPN_SUBCAT value if no ZPN_SUBCAT parameter found",
             "validator": bool,
             "default": False,
         },
         "ZPN_SUBCAT_DEFVAL": {
-            "name": "ZPN CAT Default Value ON",
-            "description": "Apply a default ZPN_CAT value if no ZPN_CAT parameter found. Format is 2-digit code (default 00)",
+            "name": "ZPN SUBCAT Default Value",
+            "description": "Default ZPN_CAT value if no ZPN_CAT parameter found. Format is 2-digit code (default 00)",
             "default": "00",
             "validator": validate_ss,
         },
