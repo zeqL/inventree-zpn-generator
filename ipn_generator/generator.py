@@ -123,7 +123,7 @@ def generate_zpn_for_part(part) -> str | None:
     #If default subcat value is ON set ss to ZPN_SUBCAT default value
     if not ss and ZPN_SUBCAT_DEFVAL_ON is True:
         ss = ZPN_SUBCAT_DEFVAL
-    else
+    else:
         logger.warning(
             f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_SUBCAT_PARAM}'. "
             "Cannot generate ZPN."
