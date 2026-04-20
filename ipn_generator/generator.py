@@ -100,7 +100,7 @@ def generate_zpn_for_part(part) -> str | None:
     Returns:
         Generated ZPN string or None if generation is not possible.
     """
-    # Read CCC from part parameter SA_CCC
+    # Read CCC from part parameter ZPN_CAT_PARAM
     ccc = get_part_parameter_value(part, ZPN_CAT_PARAM)
     if not ccc:
         logger.warning(
@@ -117,9 +117,13 @@ def generate_zpn_for_part(part) -> str | None:
         )
         return None
 
-    # Read SS from part parameter SA_SS
+    # Read SS from part parameter ZPN_SUBCAT_PARAM
     ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
-    if not ss:
+
+    #If default subcat value is ON set ss to ZPN_SUBCAT default value
+    if not ss and ZPN_SUBCAT_DEFVAL_ON is True
+        ss = ZPN_SUBCAT_DEFVAL
+    else
         logger.warning(
             f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_SUBCAT_PARAM}'. "
             "Cannot generate ZPN."
@@ -152,14 +156,14 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
     Example: 1AA01123456
     """
 
-    AUTHOR = "Simon F., Modified from Nichlas W. and Nicolas Désilles"
+    AUTHOR = "Simon F. Modified from Nichlas W. and Nicolas Désilles"
     DESCRIPTION = (
         "Plugin for automatically assigning IPN to parts. Prefix customisation for categories and subcategories (template configuration) "
         "Uses ZPN_CAT_PARAM and ZPN_SUBCAT_PARAM part parameters to determine category codes. "
         "Format: {CCC}{SS}{NNNNNN}"
     )
-    VERSION = "0.1.0"
-    WEBSITE = "https://github.com/still-asking/inventree-sapn-generator"
+    VERSION = "0.2.0"
+    WEBSITE = "https://github.com/zeqL/inventree-zpn-generator/"
 
     NAME = "ZPNGenerator"
     SLUG = "zpngen"
@@ -183,6 +187,18 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
             "description": "Generate ZPN when editing parts (only if IPN is empty)",
             "validator": bool,
             "default": False,
+        },
+        "ZPN_SUBCAT_DEFVAL_ON": {
+            "name": "ZPN SUBCAT Default Value ON",
+            "description": "Apply a default ZPN_SUBCAT value if no ZPN_SUBCAT parameter found",
+            "validator": bool,
+            "default": False,
+        },
+        "ZPN_SUBCAT_DEFVAL": {
+            "name": "ZPN CAT Default Value ON",
+            "description": "Apply a default ZPN_CAT value if no ZPN_CAT parameter found. Format is 2-digit code (default 00)",
+            "default": "00",
+            "validator": validate_ss,
         },
     }
 
