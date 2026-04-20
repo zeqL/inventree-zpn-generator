@@ -15,7 +15,6 @@ ZPN_CAT_PARAM = "ZPN_CAT"
 ZPN_SUBCAT_PARAM = "ZPN_SUBCAT"
 ZPN_MAX_SEQUENCE = 999999
 ZPN_RETRY_ATTEMPTS = 10
-ZPN_SUBCAT_DEFVAL_ON = False
 
 # Regex patterns for validation
 ZPN_CAT_PATTERN = re.compile(r"^[A-Z0-9]{3}$")
@@ -122,8 +121,8 @@ def generate_zpn_for_part(part) -> str | None:
     ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
 
     # If default subcat value is ON set ss to ZPN_SUBCAT default value
-    if not ss and ZPN_SUBCAT_DEFVAL_ON is True:
-        ss = ZPN_SUBCAT_DEFVAL
+    if not ss and "ZPN_SUBCAT_DEFVAL_ON" is True:
+        ss = "ZPN_SUBCAT_DEFVAL"
     else:
         logger.warning(
             f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_SUBCAT_PARAM}'. "
