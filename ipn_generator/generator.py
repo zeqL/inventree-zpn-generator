@@ -17,7 +17,7 @@ ZPN_MAX_SEQUENCE = 999999
 ZPN_RETRY_ATTEMPTS = 10
 
 # Regex patterns for validation
-ZPN_CAT_PATTERN = re.compile(rf"^[A-Z0-9]{3}$")
+ZPN_CAT_PATTERN = re.compile(r"^[A-Z0-9]{3}$")
 ZPN_SUBCAT_PATTERN = re.compile(r"^\d{2}$")
 
 
