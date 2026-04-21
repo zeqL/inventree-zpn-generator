@@ -15,6 +15,7 @@ ZPN_CAT_PARAM = "ZPN_CAT"
 ZPN_SUBCAT_PARAM = "ZPN_SUBCAT"
 ZPN_MAX_SEQUENCE = 999999
 ZPN_RETRY_ATTEMPTS = 10
+ZPN_SUBCAT_DEFVAL = 00
 
 # Regex patterns for validation
 ZPN_CAT_PATTERN = re.compile(r"^[A-Z0-9]{3}$")
@@ -90,7 +91,7 @@ def compute_next_zpn(ccc: str, ss: str) -> str | None:
     return f"{prefix}{next_num:06d}"
 
 
-def generate_zpn_for_part(part) -> str | None:
+def generate_zpn_for_part(part, subcat_defval) -> str | None:
     """
     Generate a ZPN for the given part based on its ZPN_CAT_PARAM and ZPN_SUBCAT_PARAM parameters.
 
@@ -125,8 +126,8 @@ def generate_zpn_for_part(part) -> str | None:
         )
     # If default subcat value is ON set ss to ZPN_SUBCAT default value
     if not ss:
-        if "ZPN_SUBCAT_DEFVAL_ON" is True:
-            ss = "ZPN_SUBCAT_DEFVAL"
+        if subcat_defval is True:
+            ss = ZPN_SUBCAT_DEFVAL
         else:
             logger.warning(
                 f"ZPN Generator: Part {part.pk} missing required parameter '{ZPN_SUBCAT_PARAM}'. "
@@ -254,7 +255,7 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
         # Attempt ZPN generation with retry for concurrency handling
         for attempt in range(1, ZPN_RETRY_ATTEMPTS + 1):
             try:
-                new_ipn = generate_zpn_for_part(part)
+                new_ipn = generate_zpn_for_part(part, self.get_setting("ZPN_SUBCAT_DEFVAL_ON"))
 
                 if not new_ipn:
                     # Generation failed due to missing/invalid parameters - already logged
