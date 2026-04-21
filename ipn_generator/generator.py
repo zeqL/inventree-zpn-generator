@@ -120,10 +120,7 @@ def generate_zpn_for_part(part, subcat_defval) -> str | None:
 
     # Read SS from part parameter ZPN_SUBCAT_PARAM
     ss = get_part_parameter_value(part, ZPN_SUBCAT_PARAM)
-    logger.warning(
-            f"ZPN Generator: Part {part.pk} get parameter '{ZPN_SUBCAT_PARAM}'. "
-            "ss= {ss} - ZPN_SUBCAT_DEFVAL_ON = {ZPN_SUBCAT_DEFVAL_ON}"
-        )
+
     # If default subcat value is ON set ss to ZPN_SUBCAT default value
     if not ss:
         if subcat_defval is True:
@@ -134,10 +131,7 @@ def generate_zpn_for_part(part, subcat_defval) -> str | None:
                 "Cannot generate ZPN."
             )
             return None
-    logger.warning(
-            f"ZPN Generator: Part {part.pk} get parameter '{ZPN_SUBCAT_PARAM}'. "
-            "ss= {ss}."
-        )
+
     ss = ss.strip()
     if not validate_ss(ss):
         logger.warning(
@@ -198,15 +192,9 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
         },
         "ZPN_SUBCAT_DEFVAL_ON": {
             "name": "ZPN SUBCAT Default Value ON/OFF",
-            "description": "Apply a default ZPN_SUBCAT value if no ZPN_SUBCAT parameter found",
+            "description": "Apply a default ZPN_SUBCAT value ("00") if no ZPN_SUBCAT parameter found",
             "validator": bool,
             "default": False,
-        },
-        "ZPN_SUBCAT_DEFVAL": {
-            "name": "ZPN SUBCAT Default Value",
-            "description": "Default ZPN_CAT value if no ZPN_CAT parameter found. Format is 2-digit code (default 00)",
-            "default": "00",
-            "validator": validate_ss,
         },
     }
 
