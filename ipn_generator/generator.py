@@ -192,7 +192,7 @@ class ZPNGeneratorPlugin(EventMixin, SettingsMixin, InvenTreePlugin):
         },
         "ZPN_SUBCAT_DEFVAL_ON": {
             "name": "ZPN SUBCAT Default Value ON/OFF",
-            "description": "Apply a default ZPN_SUBCAT value ("00") if no ZPN_SUBCAT parameter found",
+            "description": "Apply a default ZPN_SUBCAT value (00) if no ZPN_SUBCAT parameter found",
             "validator": bool,
             "default": False,
         },
